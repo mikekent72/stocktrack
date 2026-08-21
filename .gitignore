@@ -1,0 +1,9 @@
+target/
+*.class
+.vscode/
+.idea/
+*.iml
+
+data/*.db
+data/*.sqlite
+data/*.sqlite3
