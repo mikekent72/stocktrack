@@ -1,5 +1,9 @@
 package com.mikekent.stocktrack.service;
 
+import com.mikekent.stocktrack.exception.DuplicateSkuException;
+import com.mikekent.stocktrack.exception.InsufficientStockException;
+import com.mikekent.stocktrack.exception.InvalidProductException;
+import com.mikekent.stocktrack.exception.ProductNotFoundException;
 import com.mikekent.stocktrack.model.Product;
 import com.mikekent.stocktrack.repository.ProductRepository;
 
@@ -18,7 +22,7 @@ public class ProductService {
         validateProduct(product);
 
         if (productRepository.findBySku(product.getSku()) != null) {
-            throw new IllegalArgumentException(
+            throw new DuplicateSkuException(
                     "A product with this SKU already exists."
             );
         }
@@ -30,7 +34,7 @@ public class ProductService {
         Product product = productRepository.findById(id);
 
         if (product == null) {
-            throw new IllegalArgumentException(
+            throw new ProductNotFoundException(
                     "Product with ID " + id + " was not found."
             );
         }
@@ -68,7 +72,7 @@ public class ProductService {
 
         if (productWithSameSku != null
                 && productWithSameSku.getId() != existingProduct.getId()) {
-            throw new IllegalArgumentException(
+            throw new DuplicateSkuException(
                     "A product with this SKU already exists."
             );
         }
@@ -83,7 +87,7 @@ public class ProductService {
 
     public void addStock(int productId, int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Stock amount must be greater than zero."
             );
         }
@@ -97,7 +101,7 @@ public class ProductService {
 
     public void removeStock(int productId, int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Stock amount must be greater than zero."
             );
         }
@@ -105,7 +109,7 @@ public class ProductService {
         Product product = getProductById(productId);
 
         if (amount > product.getQuantity()) {
-            throw new IllegalArgumentException(
+            throw new InsufficientStockException(
                     "Cannot remove more stock than is currently available."
             );
         }
@@ -135,49 +139,48 @@ public class ProductService {
 
     private void validateProduct(Product product) {
         if (product == null) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Product cannot be null."
             );
         }
 
         if (product.getName() == null
                 || product.getName().isBlank()) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Product name cannot be empty."
             );
         }
 
         if (product.getSku() == null
                 || product.getSku().isBlank()) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "SKU cannot be empty."
             );
         }
 
         if (product.getCategory() == null) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Product category must be selected."
             );
         }
 
         if (product.getPrice() == null
                 || product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Price cannot be negative."
             );
         }
 
         if (product.getQuantity() < 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Quantity cannot be negative."
             );
         }
 
         if (product.getLowStockThreshold() < 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidProductException(
                     "Low-stock threshold cannot be negative."
             );
         }
     }
-
 }

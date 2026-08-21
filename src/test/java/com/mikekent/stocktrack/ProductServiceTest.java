@@ -4,6 +4,10 @@ import com.mikekent.stocktrack.model.Category;
 import com.mikekent.stocktrack.model.Product;
 import com.mikekent.stocktrack.repository.ProductRepository;
 import com.mikekent.stocktrack.service.ProductService;
+import com.mikekent.stocktrack.exception.DuplicateSkuException;
+import com.mikekent.stocktrack.exception.InsufficientStockException;
+import com.mikekent.stocktrack.exception.InvalidProductException;
+import com.mikekent.stocktrack.exception.ProductNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +42,7 @@ class ProductServiceTest {
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                InvalidProductException.class,
                 () -> productService.createProduct(product)
         );
     }
@@ -55,7 +59,7 @@ class ProductServiceTest {
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                InvalidProductException.class,
                 () -> productService.createProduct(product)
         );
     }
@@ -72,8 +76,48 @@ class ProductServiceTest {
         );
 
         assertThrows(
-                IllegalArgumentException.class,
+                InvalidProductException.class,
                 () -> productService.createProduct(product)
+        );
+    }
+
+    @Test
+    void shouldRejectZeroStockAmount() {
+        Product product = new Product(
+                1,
+                "Keyboard",
+                "KEY-001",
+                category,
+                new BigDecimal("50.00"),
+                10,
+                5
+        );
+
+        productRepository.save(product);
+
+        assertThrows(
+                InvalidProductException.class,
+                () -> productService.addStock(1, 0)
+        );
+    }
+
+    @Test
+    void shouldRejectNegativeStockAmount() {
+        Product product = new Product(
+                1,
+                "Keyboard",
+                "KEY-001",
+                category,
+                new BigDecimal("50.00"),
+                10,
+                5
+        );
+
+        productRepository.save(product);
+
+        assertThrows(
+                InvalidProductException.class,
+                () -> productService.removeStock(1, -2)
         );
     }
 
@@ -92,7 +136,7 @@ class ProductServiceTest {
         productRepository.save(product);
 
         assertThrows(
-                IllegalArgumentException.class,
+                InsufficientStockException.class,
                 () -> productService.removeStock(1, 6)
         );
     }
@@ -184,6 +228,42 @@ class ProductServiceTest {
         assertEquals(
                 new BigDecimal("200.00"),
                 productService.calculateInventoryValue()
+        );
+    }
+
+    @Test
+    void shouldRejectDuplicateSku() {
+        Product firstProduct = new Product(
+                "Keyboard",
+                "KEY-001",
+                category,
+                new BigDecimal("50.00"),
+                10,
+                5
+        );
+
+        productRepository.save(firstProduct);
+
+        Product duplicateProduct = new Product(
+                "Another Keyboard",
+                "KEY-001",
+                category,
+                new BigDecimal("60.00"),
+                5,
+                2
+        );
+
+        assertThrows(
+                DuplicateSkuException.class,
+                () -> productService.createProduct(duplicateProduct)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenProductDoesNotExist() {
+        assertThrows(
+                ProductNotFoundException.class,
+                () -> productService.getProductById(999)
         );
     }
 
