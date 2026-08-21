@@ -105,4 +105,8 @@ public class Product {
         this.lowStockThreshold = lowStockThreshold;
     }
     
+    public boolean isLowStock() {
+        return quantity <= lowStockThreshold;
+    }
+    
 }
